@@ -1,0 +1,6 @@
+idx|labels|action
+1|bottle,person|drink
+2|person,person|talk
+3|person|clap
+4|person|chew
+5|person|eat
