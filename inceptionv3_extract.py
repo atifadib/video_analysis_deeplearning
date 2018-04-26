@@ -6,12 +6,24 @@ from keras.layers import LSTM, Dense, Dropout
 import cv2
 import numpy as np
 import pickle
+from random import randint
+
+
+def check(dict,size_training_data):
+    if len(dict)!=size_training_data:
+        return True
+    for k,v in dict.items():
+        if v!=3:
+            return True
+    return False
+
+training_data=[]
 
 activity_net=Sequential()
-activity_net.add(LSTM(2048,input_shape=(500,2048),return_sequences=False,dropout=0.3))
+activity_net.add(LSTM(2048,input_shape=(None,2048),return_sequences=False,dropout=0.3))
 activity_net.add(Dense(1024, activation='relu'))
 activity_net.add(Dropout(0.3))
-activity_net.add(Dense(51, activation='relu'))
+activity_net.add(Dense(30, activation='relu'))
 print(activity_net.summary())
 activity_net.compile(loss='categorical_crossentropy', optimizer='adam')
 
@@ -61,19 +73,44 @@ for idx,action in enumerate(actions):
             feature = feature_extractor.predict(imgcv)
             feature=feature[0]
             video.append(feature)
-        if(len(video)<=500):
-            pad=np.zeros(2048)
-            while(len(video)!=500):
-                video.append(pad)
-        else:
-            video=video[:500]
+        #if(len(video)<=500):
+        #    pad=np.zeros(2048)
+        #    while(len(video)!=500):
+        #        video.append(pad)
+        #else:
+        #    video=video[:500]
+        seq_len=len(video)
         video=np.array(video)
-        video = video.reshape((1,500,2048))
-        output_vector = np.array(output_vector)
-        output_vector = output_vector.reshape((1,51))
-        activity_net.fit(video,output_vector,nb_epoch=20,batch_size=1,verbose=1)
-        break
+        video = video.reshape((seq_len,2048))
+        output_vector_train = np.array(output_vector)
+        #output_vector_train = output_vector_train.reshape((1,30))
+        training_data.append([video,output_vector_train])
+        #activity_net.fit(video,output_vector,epochs=5,batch_size=1,verbose=1)
     break
+
+trained=0
+size=len(training_data)
+selected={}
+while check(selected,size):
+    video=[]
+    target=[]
+    for i in range(0,10):
+        rand=randint(0,len(training_data))
+        try:
+            if selected[rand] <= 3:
+                video.append(training_data[rand][0])
+                target.append(training_data[rand][1])
+                selected[rand] += 1
+        except KeyError:
+            video.append(training_data[rand][0])
+            target.append(training_data[rand][1])
+            selected[rand] = 1
+    video = np.array(video)
+    video = video.reshape(10,2048)
+    target = np.array(target)
+    target = target.reshape(10,30)
+    activity_net.fit(video, target, epochs=20, batch_size=10, verbose=1 )
+
 activity_net.save('activity_net.h5')
 with open('idx2actions.pickle','wb') as f:
     pickle.dump(idx2actions,f)

@@ -4,3 +4,5 @@ idx|labels|action
 3|person|clap
 4|person|chew
 5|person|eat
+6|person,gun|shoot_gun
+7|person,person,person|talk

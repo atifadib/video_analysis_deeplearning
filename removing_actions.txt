@@ -16,3 +16,6 @@
 15|swing_baseball
 16|sword
 17|sword_exercise
+18|climb
+19|pullup
+20|situp
